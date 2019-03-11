@@ -178,7 +178,7 @@ class NNGPKernel(object):
       if self.use_fixed_point_norm:
         current_qaa = self.var_fixed_point
       else:
-        current_qaa = self.weight_var * tf.convert_to_tensor(
+        current_qaa = 0.5 * self.weight_var * tf.convert_to_tensor(
             [1.], dtype=tf.float64) * self.mu_2 + self.bias_var
       self.layer_qaa_dict = {0: current_qaa}
       for l in xrange(self.depth):
@@ -188,9 +188,9 @@ class NNGPKernel(object):
           samp_qaa = 0.5 * self.weight_var * current_qaa * self.mu_2 + self.bias_var
           self.layer_qaa_dict[l + 1] = samp_qaa
           current_qaa = samp_qaa
-          with tf.Session() as sess:
-             current_qaa_np = sess.run(current_qaa)
-             print(current_qaa_np)
+          # with tf.Session() as sess:
+          #    current_qaa_np = sess.run(current_qaa)
+          #    print(current_qaa_np)
 
       if return_full:
         qaa = tf.tile(current_qaa[:1], ([input_x.shape[0].value]))
@@ -221,7 +221,7 @@ class NNGPKernel(object):
       q_aa_init = self.layer_qaa_dict[0]
 
       q_ab = cov_init
-      q_ab = self.weight_var * q_ab + self.bias_var
+      q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
       corr = q_ab / q_aa_init[0]
 
       if FLAGS.fraction_of_int32 > 1:
@@ -243,10 +243,10 @@ class NNGPKernel(object):
                   #                             xp=q_aa,
                   #                             yp=corr_flat_batch)
                   multiplier = tf.constant(10**8, dtype=tf.float64)
-                  corr = tf.round(corr * multiplier) / multiplier #(corr*tf.math.asin(corr) + tf.math.sqrt(1-tf.math.pow(corr, 2)))/np.pi + corr/2
+                  corr = tf.round(corr * multiplier) / multiplier
                   q_ab = (corr*tf.math.asin(corr) + tf.math.sqrt(1-tf.math.pow(corr, 2)))/np.pi + corr/2
-                  q_ab = (self.weight_var/2) * q_ab + self.bias_var
-                  corr = q_ab
+                  q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
+                  #corr = q_ab
                   #q_ab = q_ab / self.layer_qaa_dict[l + 1][0]
                   corr_flat_batch = q_ab / self.layer_qaa_dict[l + 1][0]
                   corr = corr_flat_batch
