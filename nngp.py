@@ -178,8 +178,9 @@ class NNGPKernel(object):
       if self.use_fixed_point_norm:
         current_qaa = self.var_fixed_point
       else:
-        current_qaa = 0.5 * self.weight_var * tf.convert_to_tensor(
-            [1.], dtype=tf.float64) * self.mu_2 + self.bias_var
+        #current_qaa = 0.5 * self.weight_var * tf.convert_to_tensor(
+        #    [1.], dtype=tf.float64) * self.mu_2 + self.bias_var
+        current_qaa = tf.convert_to_tensor([1.], dtype=tf.float64)
       self.layer_qaa_dict = {0: current_qaa}
       for l in xrange(self.depth):
         with tf.name_scope("layer_%d" % l):
@@ -221,8 +222,9 @@ class NNGPKernel(object):
       q_aa_init = self.layer_qaa_dict[0]
 
       q_ab = cov_init
-      q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
+      #q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
       corr = q_ab / q_aa_init[0]
+      self.layer_corr_dict = {0: corr}
 
       if FLAGS.fraction_of_int32 > 1:
         batch_size, batch_count = self._get_batch_size_and_count(input1, input2)
@@ -250,6 +252,7 @@ class NNGPKernel(object):
                   #q_ab = q_ab / self.layer_qaa_dict[l + 1][0]
                   corr_flat_batch = q_ab / self.layer_qaa_dict[l + 1][0]
                   corr = corr_flat_batch
+                  self.layer_corr_dict[l+1] = corr
                   
 
               q_ab_all.append(q_ab)

@@ -98,7 +98,7 @@ class GaussianProcessRegression(object):
     self.l = tf.cholesky(self.k_data_data_reg)
     self.v = tf.matrix_triangular_solve(self.l, self.y_pl)
 
-  def predict(self, test_x, sess, get_var=False):
+  def predict(self, test_x, sess, get_var=True):
     """Compute mean and variance prediction for test inputs.
 
     Raises:
@@ -111,6 +111,11 @@ class GaussianProcessRegression(object):
       start_time = time.time()
       self.k_np = sess.run(self.k_data_data,
                            feed_dict={self.x_pl: self.input_x})
+      corrs = np.array([x for x in sess.run(self.kern.layer_corr_dict, feed_dict={self.x_pl: self.input_x}).values()])
+      #print(corrs)
+      #print(type(corrs))
+      save_string = str(self.kern.weight_var) + "_" + str(self.kern.mu_2)
+      np.save('results/corrs/' + save_string, corrs)
       # print(self.k_np)
       # print(np.count_nonzero(np.isnan(self.k_np)))
       # print(np.diag(self.k_np))
@@ -136,7 +141,7 @@ class GaussianProcessRegression(object):
                           ": {}".format(self.current_stability_eps))
 
     if self.current_stability_eps > 0.2:
-      return "NaN", self.current_stability_eps
+      return "NaN", "NaN", "NaN", self.current_stability_eps
       #raise ArithmeticError("Could not compute Cholesky decomposition.")
 
     n_test = test_x.shape[0]
@@ -148,15 +153,20 @@ class GaussianProcessRegression(object):
         self.v: self.v_np
     }
 
+    # compute norm of kernel
+    kernel_norm = np.linalg.norm(self.k_np)
+
     start_time = time.time()
     if get_var:
       mean_pred, var_pred = sess.run(
           [self.fmean, self.fvar], feed_dict=feed_dict)
       tf.logging.info("Did regression in %.3f secs"% (time.time() - start_time))
-      return mean_pred, var_pred, self.current_stability_eps
+      print(var_pred)
+      print(kernel_norm)
+      return mean_pred, var_pred, kernel_norm, self.current_stability_eps
 
     else:
       mean_pred = sess.run(self.fmean, feed_dict=feed_dict)
       tf.logging.info("Did regression in %.3f secs"% (time.time() - start_time))
-      return mean_pred, self.current_stability_eps
+      return mean_pred, kernel_norm, self.current_stability_eps
 

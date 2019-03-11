@@ -1,7 +1,7 @@
 #!/bin/bash
-for weight_var in `seq 1.0 0.01 2.0`
+for weight_var in 2.0 #`seq 1.0 0.2 2.0`
 do
-    for mu_2 in `seq 1.0 0.01 2.0`
+    for mu_2 in 1.0 #`seq 1.0 0.2 2.0`
     do
         python run_experiments.py \
       --num_train=1000 \

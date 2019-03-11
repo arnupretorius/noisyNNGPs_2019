@@ -81,19 +81,29 @@ def set_default_hparams():
 def do_eval(sess, model, x_data, y_data, save_pred=False):
   """Run evaluation."""
 
-  gp_prediction, stability_eps = model.predict(x_data, sess)
+  gp_prediction, var_pred, kernel_norm, stability_eps = model.predict(x_data, sess)
 
   if gp_prediction == "NaN":
     accuracy = 0
     mse = float('Inf')
-    pred_norm = float('NaN')
-    return accuracy, mse, pred_norm, stability_eps
+    var = float('NaN')
+    kernel_norm = float('NaN')
+    return accuracy, mse, var, kernel_norm, stability_eps
   pred_1 = np.argmax(gp_prediction, axis=1)
   accuracy = np.sum(pred_1 == np.argmax(y_data, axis=1)) / float(len(y_data))
   mse = np.mean(np.mean((gp_prediction - y_data)**2, axis=1))
   pred_norm = np.mean(np.linalg.norm(gp_prediction, axis=1))
+  var = np.mean(var_pred[:,0])
   tf.logging.info('Accuracy: %.4f'%accuracy)
   tf.logging.info('MSE: %.8f'%mse)
+  tf.logging.info('Var: %.8f'%var)
+  print("---- Variance -----")
+  print(np.mean(var_pred[:,0]))
+  print(var_pred.shape)
+  print("-------------------")
+  print("----- Kernel norm -----")
+  print(kernel_norm)
+  print("-------------------")
 
   if save_pred:
     with tf.gfile.Open(
@@ -101,7 +111,7 @@ def do_eval(sess, model, x_data, y_data, save_pred=False):
         'w') as f:
       np.save(f, gp_prediction)
 
-  return accuracy, mse, pred_norm, stability_eps
+  return accuracy, mse, var, kernel_norm, stability_eps
 
 
 def run_nngp_eval(hparams, run_dir):
@@ -155,6 +165,7 @@ def run_nngp_eval(hparams, run_dir):
         max_var=FLAGS.max_var,
         use_fixed_point_norm=FLAGS.use_fixed_point_norm)
 
+
     # Construct Gaussian Process Regression model
     model = gpr.GaussianProcessRegression(
         train_image, train_label, kern=nngp_kernel)
@@ -165,7 +176,7 @@ def run_nngp_eval(hparams, run_dir):
     # For large number of training points, we do not evaluate on full set to
     # save on training evaluation time.
     if FLAGS.num_train <= 5000:
-      acc_train, mse_train, norm_train, final_eps = do_eval(
+      acc_train, mse_train, var_train, norm_train, final_eps = do_eval(
           sess, model, train_image[:FLAGS.num_eval],
           train_label[:FLAGS.num_eval])
       tf.logging.info('Evaluation of training set (%d examples) took '
@@ -173,14 +184,14 @@ def run_nngp_eval(hparams, run_dir):
                           min(FLAGS.num_train, FLAGS.num_eval),
                           time.time() - start_time))
     else:
-      acc_train, mse_train, norm_train, final_eps = do_eval(
+      acc_train, mse_train, var_train, norm_train, final_eps = do_eval(
           sess, model, train_image[:1000], train_label[:1000])
       tf.logging.info('Evaluation of training set (%d examples) took '
                       '%.3f secs'%(1000, time.time() - start_time))
 
     start_time = time.time()
     tf.logging.info('Validation')
-    acc_valid, mse_valid, norm_valid, _ = do_eval(
+    acc_valid, mse_valid, var_valid, norm_valid, _ = do_eval(
         sess, model, valid_image[:FLAGS.num_eval],
         valid_label[:FLAGS.num_eval])
     tf.logging.info('Evaluation of valid set (%d examples) took %.3f secs'%(
@@ -188,7 +199,7 @@ def run_nngp_eval(hparams, run_dir):
 
     start_time = time.time()
     tf.logging.info('Test')
-    acc_test, mse_test, norm_test, _ = do_eval(
+    acc_test, mse_test, var_test, norm_test, _ = do_eval(
         sess,
         model,
         test_image[:FLAGS.num_eval],
@@ -211,9 +222,11 @@ def run_nngp_eval(hparams, run_dir):
   }
 
   record_results = [
+      # FLAGS.num_train, hparams.nonlinearity, hparams.weight_var,
+      # hparams.bias_var, hparams.mu_2, hparams.depth, acc_train, acc_valid, acc_test,
+      # mse_train, mse_valid, mse_test, final_eps
       FLAGS.num_train, hparams.nonlinearity, hparams.weight_var,
-      hparams.bias_var, hparams.mu_2, hparams.depth, acc_train, acc_valid, acc_test,
-      mse_train, mse_valid, mse_test, final_eps
+      hparams.bias_var, hparams.mu_2, hparams.depth, acc_train, acc_test, var_test, norm_train 
   ]
   if nngp_kernel.use_fixed_point_norm:
     metrics['var_fixed_point'] = float(nngp_kernel.var_fixed_point_np[0])
@@ -224,6 +237,15 @@ def run_nngp_eval(hparams, run_dir):
   with tf.gfile.Open(result_file, 'a') as f:
     filewriter = csv.writer(f)
     filewriter.writerow(record_results)
+  with tf.Session() as sess:
+    varss = np.array([x[0] for x in sess.run(nngp_kernel.layer_qaa_dict).values()])
+    #print(varss)
+    #print(type(varss))
+    save_string = str(hparams.weight_var) + '_' + str(hparams.mu_2)
+    np.save('results/vars/'+save_string, varss)
+    #np.save('corrs', sess.run(nngp_kernel.layer_corr_dict, feed_dict={train_image}))
+  #np.save('vars', nngp_kernel.layer_qaa_dict)
+  #np.save('corrs', nngp_kernel.layer_corr_dict)
 
   return metrics
 
