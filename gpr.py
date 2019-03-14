@@ -112,9 +112,10 @@ class GaussianProcessRegression(object):
       self.k_np = sess.run(self.k_data_data,
                            feed_dict={self.x_pl: self.input_x})
       corrs = np.array([x for x in sess.run(self.kern.layer_corr_dict, feed_dict={self.x_pl: self.input_x}).values()])
+      corrs = [x[0,1] for x in corrs]
       #print(corrs)
       #print(type(corrs))
-      save_string = str(self.kern.weight_var) + "_" + str(self.kern.mu_2)
+      save_string = str(self.kern.depth) + "_" + str(self.kern.weight_var) + "_" + str(self.kern.mu_2)
       np.save('results/corrs/' + save_string, corrs)
       # print(self.k_np)
       # print(np.count_nonzero(np.isnan(self.k_np)))

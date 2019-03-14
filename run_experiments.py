@@ -233,7 +233,7 @@ def run_nngp_eval(hparams, run_dir):
     record_results.append(nngp_kernel.var_fixed_point_np[0])
 
   # Store data
-  result_file = os.path.join(run_dir, 'results.csv')
+  result_file = os.path.join(run_dir, 'results' + str(hparams.depth) + '.csv')
   with tf.gfile.Open(result_file, 'a') as f:
     filewriter = csv.writer(f)
     filewriter.writerow(record_results)
@@ -241,7 +241,7 @@ def run_nngp_eval(hparams, run_dir):
     varss = np.array([x[0] for x in sess.run(nngp_kernel.layer_qaa_dict).values()])
     #print(varss)
     #print(type(varss))
-    save_string = str(hparams.weight_var) + '_' + str(hparams.mu_2)
+    save_string = str(hparams.depth) + "_" + str(hparams.weight_var) + '_' + str(hparams.mu_2)
     np.save('results/vars/'+save_string, varss)
     #np.save('corrs', sess.run(nngp_kernel.layer_corr_dict, feed_dict={train_image}))
   #np.save('vars', nngp_kernel.layer_qaa_dict)
