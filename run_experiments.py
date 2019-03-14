@@ -47,7 +47,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('hparams', '',
                     'Comma separated list of name=value hyperparameter pairs to'
                     'override the default setting.')
-flags.DEFINE_string('experiment_dir', 'results',
+flags.DEFINE_string('experiment_dir', 'results_cifar',
                     'Directory to put the experiment results.')
 flags.DEFINE_string('grid_path', './grid_data',
                     'Directory to put or find the training data.')
@@ -132,11 +132,16 @@ def run_nngp_eval(hparams, run_dir):
   # Get the sets of images and labels for training, validation, and
   # # test on dataset.
   if FLAGS.dataset == 'mnist':
-    (train_image, train_label, valid_image, valid_label, test_image,
-     test_label) = load_dataset.load_mnist(
+    (train_image, train_label, #valid_image, valid_label, 
+    test_image, test_label) = load_dataset.load_mnist(
          num_train=FLAGS.num_train,
          mean_subtraction=True,
-         random_roated_labels=False)
+         random_rotated_labels=False)
+  elif FLAGS.dataset == 'cifar10':
+    (train_image, train_label, #valid_image, valid_label, 
+    test_image, test_label) = load_dataset.load_cifar10(
+         num_train=FLAGS.num_train,
+         mean_subtraction=True)
   else:
     raise NotImplementedError
 
@@ -189,13 +194,13 @@ def run_nngp_eval(hparams, run_dir):
       tf.logging.info('Evaluation of training set (%d examples) took '
                       '%.3f secs'%(1000, time.time() - start_time))
 
-    start_time = time.time()
-    tf.logging.info('Validation')
-    acc_valid, mse_valid, var_valid, norm_valid, _ = do_eval(
-        sess, model, valid_image[:FLAGS.num_eval],
-        valid_label[:FLAGS.num_eval])
-    tf.logging.info('Evaluation of valid set (%d examples) took %.3f secs'%(
-        FLAGS.num_eval, time.time() - start_time))
+    # start_time = time.time()
+    # tf.logging.info('Validation')
+    # acc_valid, mse_valid, var_valid, norm_valid, _ = do_eval(
+    #     sess, model, valid_image[:FLAGS.num_eval],
+    #     valid_label[:FLAGS.num_eval])
+    # tf.logging.info('Evaluation of valid set (%d examples) took %.3f secs'%(
+    #     FLAGS.num_eval, time.time() - start_time))
 
     start_time = time.time()
     tf.logging.info('Test')
@@ -212,9 +217,9 @@ def run_nngp_eval(hparams, run_dir):
       'train_acc': float(acc_train),
       'train_mse': float(mse_train),
       'train_norm': float(norm_train),
-      'valid_acc': float(acc_valid),
-      'valid_mse': float(mse_valid),
-      'valid_norm': float(norm_valid),
+      # 'valid_acc': float(acc_valid),
+      # 'valid_mse': float(mse_valid),
+      # 'valid_norm': float(norm_valid),
       'test_acc': float(acc_test),
       'test_mse': float(mse_test),
       'test_norm': float(norm_test),
@@ -242,7 +247,7 @@ def run_nngp_eval(hparams, run_dir):
     #print(varss)
     #print(type(varss))
     save_string = str(hparams.depth) + "_" + str(hparams.weight_var) + '_' + str(hparams.mu_2)
-    np.save('results/vars/'+save_string, varss)
+    np.save('results_cifar/vars/'+save_string, varss)
     #np.save('corrs', sess.run(nngp_kernel.layer_corr_dict, feed_dict={train_image}))
   #np.save('vars', nngp_kernel.layer_qaa_dict)
   #np.save('corrs', nngp_kernel.layer_corr_dict)

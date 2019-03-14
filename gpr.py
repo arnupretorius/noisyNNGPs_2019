@@ -116,7 +116,7 @@ class GaussianProcessRegression(object):
       #print(corrs)
       #print(type(corrs))
       save_string = str(self.kern.depth) + "_" + str(self.kern.weight_var) + "_" + str(self.kern.mu_2)
-      np.save('results/corrs/' + save_string, corrs)
+      np.save('results_cifar/corrs/' + save_string, corrs)
       # print(self.k_np)
       # print(np.count_nonzero(np.isnan(self.k_np)))
       # print(np.diag(self.k_np))
