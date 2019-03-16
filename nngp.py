@@ -79,8 +79,8 @@ class NNGPKernel(object):
     self.mu_2 = mu_2
     self.use_fixed_point_norm = use_fixed_point_norm
     self.sess = sess
-    if FLAGS.use_precomputed_grid and (grid_path is None):
-      raise ValueError("grid_path must be specified to use precomputed grid.")
+    # if FLAGS.use_precomputed_grid and (grid_path is None):
+    #   raise ValueError("grid_path must be specified to use precomputed grid.")
     self.grid_path = grid_path
 
 
@@ -226,7 +226,7 @@ class NNGPKernel(object):
       corr = q_ab / q_aa_init[0]
       self.layer_corr_dict = {0: corr}
 
-      if FLAGS.fraction_of_int32 > 1:
+      if False: #FLAGS.fraction_of_int32 > 1:
         batch_size, batch_count = self._get_batch_size_and_count(input1, input2)
         with tf.name_scope("q_ab"):
           q_ab_all = []
