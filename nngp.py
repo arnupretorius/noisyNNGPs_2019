@@ -79,8 +79,8 @@ class NNGPKernel(object):
     self.mu_2 = mu_2
     self.use_fixed_point_norm = use_fixed_point_norm
     self.sess = sess
-    # if FLAGS.use_precomputed_grid and (grid_path is None):
-    #   raise ValueError("grid_path must be specified to use precomputed grid.")
+    if FLAGS.use_precomputed_grid and (grid_path is None):
+      raise ValueError("grid_path must be specified to use precomputed grid.")
     self.grid_path = grid_path
 
 
@@ -224,9 +224,10 @@ class NNGPKernel(object):
       q_ab = cov_init
       #q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
       corr = q_ab / q_aa_init[0]
+      corr_init = corr
       self.layer_corr_dict = {0: corr}
 
-      if False: #FLAGS.fraction_of_int32 > 1:
+      if FLAGS.fraction_of_int32 > 1:
         batch_size, batch_count = self._get_batch_size_and_count(input1, input2)
         with tf.name_scope("q_ab"):
           q_ab_all = []
@@ -269,15 +270,17 @@ class NNGPKernel(object):
               #                             z=self.qab_grid,
               #                             xp=q_aa,
               #                             yp=corr_flat)
-              q_ab = (corr*tf.math.asin(corr) + tf.math.sqrt(1-corr**2))/np.pi + corr/2
-
-              q_ab = (self.weight_var/2) * q_ab + self.bias_var
+              multiplier = tf.constant(10**8, dtype=tf.float64)
+              corr = tf.round(corr * multiplier) / multiplier
+              q_ab = (corr*tf.math.asin(corr) + tf.math.sqrt(1-tf.math.pow(corr, 2)))/np.pi + corr/2
+              q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
               #q_ab = self.weight_var * q_ab + self.bias_var
               corr_flat = q_ab / self.layer_qaa_dict[l+1][0]
               corr = corr_flat
             q_ab_all = q_ab
+            #q_ab_all = cov_init
 
-    return tf.reshape(q_ab_all, cov_init.shape, "qab")
+    return  tf.reshape(q_ab_all, cov_init.shape, "qab")
 
   def _input_layer_normalization(self, x):
     """Input normalization to unit variance or fixed point variance.

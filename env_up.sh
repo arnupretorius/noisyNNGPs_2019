@@ -1,0 +1,1 @@
+docker run --runtime=nvidia -p 8888:8888 -it -v "$(pwd)":/noisy_nngps ufoym/deepo:tensorflow-py27-cu90 
