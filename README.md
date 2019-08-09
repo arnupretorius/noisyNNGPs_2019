@@ -2,6 +2,8 @@
 
 This repository provides the code to reproduce the results in the paper: "On the expected behaviour of noise regularised neural networks as Gaussian processes."
 
+The code was written by Arnu Pretorius. Large portions of the code was originally adapted from code that was made available by Lee et al. (2018) at https://github.com/brain-research/nngp.
+
 ## Basic requirements to plot Figures 1, 3 and 4
 
 To reproduce Figures 1, 3 and 4 all that is required is `numpy`, `pandas`, `seaborn` and `matplotlib`. Each figure corresponds to a notebook in the repository.
@@ -30,3 +32,6 @@ Change directory to the cloned repository on your local machine and run the bash
 
 Next change directory to `noisy_nngps`, and run the following script `run_exp.sh`.
 
+### References
+
+Lee, J., Bahri, Y., Novak, R., Schoenholz, S.S., Pennington, J. and Sohl-Dickstein, J. Deep neural networks as gaussian processes. ICLR, 2018.
