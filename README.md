@@ -34,4 +34,5 @@ Next change directory to `noisy_nngps`, and run the following script `run_exp.sh
 
 ### References
 
-Lee, J., Bahri, Y., Novak, R., Schoenholz, S.S., Pennington, J. and Sohl-Dickstein, J. Deep neural networks as gaussian processes. ICLR, 2018.
+- Pretorius, A., Kamper, H., & Kroon, S. On the expected behaviour of noise regularised neural networks as Gaussian processes. Under review: NeurIPS, 2019.
+- Lee, J., Bahri, Y., Novak, R., Schoenholz, S.S., Pennington, J. and Sohl-Dickstein, J. Deep neural networks as gaussian processes. ICLR, 2018.
