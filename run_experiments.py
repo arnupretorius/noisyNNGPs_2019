@@ -47,7 +47,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('hparams', '',
                     'Comma separated list of name=value hyperparameter pairs to'
                     'override the default setting.')
-flags.DEFINE_string('experiment_dir', 'results_cifar',
+flags.DEFINE_string('experiment_dir', 'results',
                     'Directory to put the experiment results.')
 flags.DEFINE_string('grid_path', './grid_data',
                     'Directory to put or find the training data.')
@@ -245,7 +245,7 @@ def run_nngp_eval(hparams, run_dir):
   with tf.Session() as sess:
     varss = np.array([x[0] for x in sess.run(nngp_kernel.layer_qaa_dict).values()])
     save_string = str(hparams.depth) + "_" + str(hparams.weight_var) + '_' + str(hparams.mu_2)
-    np.save('results_cifar/vars/'+save_string, varss)
+    np.save('results/vars/'+save_string, varss)
 
   return metrics
 

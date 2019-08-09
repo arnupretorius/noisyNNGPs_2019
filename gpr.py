@@ -114,7 +114,7 @@ class GaussianProcessRegression(object):
       corrs = np.array([x for x in sess.run(self.kern.layer_corr_dict, feed_dict={self.x_pl: self.input_x}).values()])
       corrs = [x[0,1] for x in corrs]
       save_string = str(self.kern.depth) + "_" + str(self.kern.weight_var) + "_" + str(self.kern.mu_2)
-      np.save('results_cifar/corrs/' + save_string, corrs)
+      np.save('results/corrs/' + save_string, corrs)
       tf.logging.info("Computed K_DD in %.3f secs" % (time.time() - start_time))
 
       while self.current_stability_eps < 1:

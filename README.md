@@ -30,3 +30,9 @@ Change directory to the cloned repository on your local machine and run the bash
 ```bash
 env_up.sh
 ```
+
+Next change directory to `noisy_nngps`, and run the following script.
+```bash
+run_exp.sh
+```
+
