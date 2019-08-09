@@ -1,6 +1,6 @@
 # Code: On the expected behaviour of noise regularised neural networks as Gaussian processes.
 
-This repository provides the code to reproduce the results in the paper: "On the expected behaviour of noise regularised neural networks as Gaussian processes." (ICML 2018)
+This repository provides the code to reproduce the results in the paper: "On the expected behaviour of noise regularised neural networks as Gaussian processes."
 
 ## Basic requirements to plot Figures 1, 3 and 4
 
