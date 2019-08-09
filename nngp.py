@@ -19,6 +19,10 @@ Implementaion based on
 Jaehoon Lee, Yasaman Bahri, Roman Novak, Samuel S. Schoenholz,
 Jeffrey Pennington, Jascha Sohl-Dickstein
 arXiv:1711.00165 (https://arxiv.org/abs/1711.00165).
+
+This code has been adapted by Arnu Pretorius for the paper
+"On the expected behaviour of noise regularised neural networks as Gaussian processes" by
+Arnu Pretorius, Herman Kamper and Steve Kroon.
 """
 from __future__ import absolute_import
 from __future__ import division
