@@ -4,7 +4,7 @@ This repository provides the code to reproduce the results in the paper: "On the
 
 ## Basic requirements to plot Figures 1, 3 and 4
 
-To reproduce Figures 1-4, all that is required is `numpy`, `pandas`, `seaborn` and `matplotlib`.
+To reproduce Figures 1, 3 and 4 all that is required is `numpy`, `pandas`, `seaborn` and `matplotlib`. Each figure corresponds to a notebook in the repository.
 
 ## Requirements to regenerate the results for Figures 1 and 3: 
 
@@ -14,7 +14,7 @@ To regenerate the results for Figures 1 and 3, follow the instructions given bel
 
 #### Step 1. Install [Docker](https://docs.docker.com/engine/installation/) and [nvidia-docker](https://github.com/NVIDIA/nvidia-docker).
 
-#### Step 2. Pull deepo image to duplicate the research environment.
+#### Step 2. Pull the deepo image to duplicate the research environment.
 
 ```bash
 docker pull ufoym/deepo:tensorflow-py27-cu90
@@ -26,13 +26,7 @@ git clone https://github.com/arnupretorius/noisyNNGPs_2019.git
 
 ### Usage
 
-Change directory to the cloned repository on your local machine and run the bash script to start the docker container with the correct environment.
-```bash
-env_up.sh
-```
+Change directory to the cloned repository on your local machine and run the bash script `env_up.sh` to start the docker container with the correct environment.
 
-Next change directory to `noisy_nngps`, and run the following script.
-```bash
-run_exp.sh
-```
+Next change directory to `noisy_nngps`, and run the following script `run_exp.sh`.
 
