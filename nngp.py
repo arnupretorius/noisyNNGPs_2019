@@ -85,58 +85,9 @@ class NNGPKernel(object):
 
 
     self.nonlin_fn = nonlin_fn
-    # (self.var_aa_grid, self.corr_ab_grid, self.qaa_grid,
-    #  self.qab_grid) = self.get_grid(n_gauss, n_var, n_corr, max_var, max_gauss)
 
     if self.use_fixed_point_norm:
       self.var_fixed_point_np, self.var_fixed_point = self.get_var_fixed_point()
-
-  # def get_grid(self, n_gauss, n_var, n_corr, max_var, max_gauss):
-  #   """Get covariance grid by loading or computing a new one.
-  #   """
-  #   # File configuration for precomputed grid
-  #   if FLAGS.use_precomputed_grid:
-  #     grid_path = self.grid_path
-  #     # TODO(jaehlee) np.save have broadcasting error when n_var==n_corr.
-  #     if n_var == n_corr:
-  #       n_var += 1
-  #     grid_file_name = "grid_{0:s}_ng{1:d}_ns{2:d}_nc{3:d}".format(
-  #         self.nonlin_fn.__name__, n_gauss, n_var, n_corr)
-  #     grid_file_name += "_mv{0:d}_mg{1:d}".format(max_var, max_gauss)
-
-  #   # Load grid file if it exists already
-  #   if (FLAGS.use_precomputed_grid and
-  #       tf.gfile.Exists(os.path.join(grid_path, grid_file_name))):
-  #     with tf.gfile.Open(os.path.join(grid_path, grid_file_name), "rb") as f:
-  #       grid_data_np = np.load(f, encoding='latin1')
-  #       tf.logging.info("Loaded interpolation grid from %s"%
-  #                       os.path.join(grid_path, grid_file_name))
-  #       grid_data = (tf.convert_to_tensor(grid_data_np[0], dtype=tf.float64),
-  #                    tf.convert_to_tensor(grid_data_np[1], dtype=tf.float64),
-  #                    tf.convert_to_tensor(grid_data_np[2], dtype=tf.float64),
-  #                    tf.convert_to_tensor(grid_data_np[3], dtype=tf.float64))
-
-  #   else:
-  #     tf.logging.info("Generating interpolation grid...")
-  #     grid_data = _compute_qmap_grid(self.nonlin_fn, n_gauss, n_var, n_corr,
-  #                                    max_var=max_var, max_gauss=max_gauss)
-  #     if FLAGS.use_precomputed_grid:
-  #       with tf.Session() as sess:
-  #         grid_data_np = sess.run(grid_data)
-  #       tf.gfile.MakeDirs(grid_path)
-  #       with tf.gfile.Open(os.path.join(grid_path, grid_file_name), "wb") as f:
-  #         np.save(f, grid_data_np)
-
-  #       with tf.gfile.Open(os.path.join(grid_path, grid_file_name), "rb") as f:
-  #         grid_data_np = np.load(f)
-  #         tf.logging.info("Loaded interpolation grid from %s"%
-  #                         os.path.join(grid_path, grid_file_name))
-  #         grid_data = (tf.convert_to_tensor(grid_data_np[0], dtype=tf.float64),
-  #                      tf.convert_to_tensor(grid_data_np[1], dtype=tf.float64),
-  #                      tf.convert_to_tensor(grid_data_np[2], dtype=tf.float64),
-  #                      tf.convert_to_tensor(grid_data_np[3], dtype=tf.float64))
-
-  #   return grid_data
 
   def get_var_fixed_point(self):
     with tf.name_scope("get_var_fixed_point"):
@@ -148,8 +99,6 @@ class NNGPKernel(object):
       prev_qaa_np = 1.
       it = 0
       while diff > 1e-6 and it < 300:
-        # samp_qaa = interp.interp_lin(
-        #     self.var_aa_grid, self.qaa_grid, current_qaa)
         samp_qaa = 0.5 * self.weight_var * current_qaa * self.mu_2 + self.bias_var
         current_qaa = samp_qaa
 
@@ -178,31 +127,18 @@ class NNGPKernel(object):
       if self.use_fixed_point_norm:
         current_qaa = self.var_fixed_point
       else:
-        #current_qaa = 0.5 * self.weight_var * tf.convert_to_tensor(
-        #    [1.], dtype=tf.float64) * self.mu_2 + self.bias_var
         current_qaa = tf.convert_to_tensor([1.], dtype=tf.float64)
       self.layer_qaa_dict = {0: current_qaa}
       for l in xrange(self.depth):
         with tf.name_scope("layer_%d" % l):
-          # samp_qaa = interp.interp_lin(
-          #     self.var_aa_grid, self.qaa_grid, current_qaa)
           samp_qaa = 0.5 * self.weight_var * current_qaa * self.mu_2 + self.bias_var
           self.layer_qaa_dict[l + 1] = samp_qaa
           current_qaa = samp_qaa
-          # with tf.Session() as sess:
-          #    current_qaa_np = sess.run(current_qaa)
-          #    print(current_qaa_np)
 
       if return_full:
         qaa = tf.tile(current_qaa[:1], ([input_x.shape[0].value]))
-        # with tf.Session() as sess:
-        #      qaa_np = sess.run(qaa)
-        #      print("qaa_tile", qaa_np)
       else:
         qaa = current_qaa[0]
-        # with tf.Session() as sess:
-        #      qaa_np = sess.run(qaa)
-        #      print("qaa", qaa_np)
       return qaa
 
   def k_full(self, input1, input2=None):
@@ -222,7 +158,6 @@ class NNGPKernel(object):
       q_aa_init = self.layer_qaa_dict[0]
 
       q_ab = cov_init
-      #q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
       corr = q_ab / q_aa_init[0]
       corr_init = corr
       self.layer_corr_dict = {0: corr}
@@ -240,17 +175,10 @@ class NNGPKernel(object):
               for l in xrange(self.depth):
                 with tf.name_scope("layer_%d" % l):
                   q_aa = self.layer_qaa_dict[l]
-                  # q_ab = interp.interp_lin_2d(x=self.var_aa_grid,
-                  #                             y=self.corr_ab_grid,
-                  #                             z=self.qab_grid,
-                  #                             xp=q_aa,
-                  #                             yp=corr_flat_batch)
                   multiplier = tf.constant(10**8, dtype=tf.float64)
                   corr = tf.round(corr * multiplier) / multiplier
                   q_ab = (corr*tf.math.asin(corr) + tf.math.sqrt(1-tf.math.pow(corr, 2)))/np.pi + corr/2
                   q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
-                  #corr = q_ab
-                  #q_ab = q_ab / self.layer_qaa_dict[l + 1][0]
                   corr_flat_batch = q_ab / self.layer_qaa_dict[l + 1][0]
                   corr = corr_flat_batch
                   self.layer_corr_dict[l+1] = corr
@@ -265,20 +193,13 @@ class NNGPKernel(object):
           for l in xrange(self.depth):
             with tf.name_scope("layer_%d" % l):
               q_aa = self.layer_qaa_dict[l]
-              # q_ab = interp.interp_lin_2d(x=self.var_aa_grid,
-              #                             y=self.corr_ab_grid,
-              #                             z=self.qab_grid,
-              #                             xp=q_aa,
-              #                             yp=corr_flat)
               multiplier = tf.constant(10**8, dtype=tf.float64)
               corr = tf.round(corr * multiplier) / multiplier
               q_ab = (corr*tf.math.asin(corr) + tf.math.sqrt(1-tf.math.pow(corr, 2)))/np.pi + corr/2
               q_ab = 0.5 * self.weight_var * q_ab + self.bias_var
-              #q_ab = self.weight_var * q_ab + self.bias_var
               corr_flat = q_ab / self.layer_qaa_dict[l+1][0]
               corr = corr_flat
             q_ab_all = q_ab
-            #q_ab_all = cov_init
 
     return  tf.reshape(q_ab_all, cov_init.shape, "qab")
 
@@ -316,109 +237,3 @@ class NNGPKernel(object):
 
     batch_count = input1_size // batch_size
     return batch_size, batch_count
-
-
-# def _fill_qab_slice(idx, z1, z2, var_aa, corr_ab, nonlin_fn):
-#   """Helper method used for parallel computation for full qab."""
-#   log_weights_ab_unnorm = -(z1**2 + z2**2 - 2 * z1 * z2 * corr_ab) / (
-#       2 * var_aa[idx] * (1 - corr_ab**2))
-#   log_weights_ab = log_weights_ab_unnorm - tf.reduce_logsumexp(
-#       log_weights_ab_unnorm, axis=[0, 1], keep_dims=True)
-#   weights_ab = tf.exp(log_weights_ab)
-
-#   qab_slice = tf.reduce_sum(
-#       nonlin_fn(z1) * nonlin_fn(z2) * weights_ab, axis=[0, 1])
-#   qab_slice = tf.Print(qab_slice, [idx], "Generating slice: ")
-#   return qab_slice
-
-
-# def _compute_qmap_grid(nonlin_fn,
-#                        n_gauss,
-#                        n_var,
-#                        n_corr,
-#                        log_spacing=False,
-#                        min_var=1e-8,
-#                        max_var=100.,
-#                        max_corr=0.99999,
-#                        max_gauss=10.):
-#   """Construct graph for covariance grid to use for kernel computation.
-
-#   Given variance and correlation (or covariance) of pre-activation, perform
-#   Gaussian integration to get covariance of post-activation.
-
-#   Raises:
-#     ValueError: if n_gauss is even integer.
-
-#   Args:
-#     nonlin_fn: tf ops corresponding to point-wise non-linearity in
-#       corresponding NN. e.g.) tf.nn.relu, tf.nn.sigmoid,
-#       lambda x: x * tf.nn.sigmoid(x), ...
-#     n_gauss: int, number of Gaussian integration points with equal spacing
-#       between (-max_gauss, max_gauss). Choose odd integer, so that there is a
-#       gridpoint at 0.
-#     n_var: int, number of variance grid points.get_grid
-#     n_corr: int, number of correlation grid points.
-#     log_spacing: bool, whether to use log-linear instead of linear variance
-#       grid.
-#     min_var: float, smallest variance value to generate grid.
-#     max_var: float, largest variance value to generate grid.
-#     max_corr: float, largest correlation value to generate grid. Should be
-#       slightly smaller than 1.
-#     max_gauss: float, range (-max_gauss, max_gauss) for Gaussian integration.
-
-#   Returns:
-#     var_grid_pts: tensor of size [n_var], grid points where variance are
-#       evaluated at.
-#     corr_grid_pts: tensor of size [n_corr], grid points where correlation are
-#       evaluated at.
-#     qaa: tensor of size [n_var], variance of post-activation at given
-#       pre-activation variance.
-#     qab: tensor of size [n_var, n_corr], covariance of post-activation at
-#       given pre-activation variance and correlation.
-#   """
-#   if n_gauss % 2 != 1:
-#     raise ValueError("n_gauss=%d should be an odd integer" % n_gauss)
-
-#   with tf.name_scope("compute_qmap_grid"):
-#     min_var = tf.convert_to_tensor(min_var, dtype=tf.float64)
-#     max_var = tf.convert_to_tensor(max_var, dtype=tf.float64)
-#     max_corr = tf.convert_to_tensor(max_corr, dtype=tf.float64)
-#     max_gauss = tf.convert_to_tensor(max_gauss, dtype=tf.float64)
-
-#     # Evaluation points for numerical integration over a Gaussian.
-#     z1 = tf.reshape(tf.linspace(-max_gauss, max_gauss, n_gauss), (-1, 1, 1))
-#     z2 = tf.transpose(z1, perm=[1, 0, 2])
-
-#     if log_spacing:
-#       var_aa = tf.exp(tf.linspace(tf.log(min_var), tf.log(max_var), n_var))
-#     else:
-#       # Evaluation points for pre-activations variance and correlation
-#       var_aa = tf.linspace(min_var, max_var, n_var)
-#     corr_ab = tf.reshape(tf.linspace(-max_corr, max_corr, n_corr), (1, 1, -1))
-
-#     # compute q_aa
-#     log_weights_aa_unnorm = -0.5 * (z1**2 / tf.reshape(var_aa, [1, 1, -1]))
-#     log_weights_aa = log_weights_aa_unnorm - tf.reduce_logsumexp(
-#         log_weights_aa_unnorm, axis=[0, 1], keep_dims=True)
-#     weights_aa = tf.exp(log_weights_aa)
-#     qaa = tf.reduce_sum(nonlin_fn(z1)**2 * weights_aa, axis=[0, 1])
-
-#     # compute q_ab
-#     # weights to reweight uniform samples by, for q_ab.
-#     # (weights are probability of z1, z2 under Gaussian
-#     #  w/ variance var_aa and covariance var_aa*corr_ab)
-#     # weights_ab will have shape [n_g, n_g, n_v, n_c]
-#     def fill_qab_slice(idx):
-#       return _fill_qab_slice(idx, z1, z2, var_aa, corr_ab, nonlin_fn)
-
-#     qab = tf.map_fn(
-#         fill_qab_slice,
-#         tf.range(n_var),
-#         dtype=tf.float64,
-#         parallel_iterations=multiprocessing.cpu_count())
-
-#     var_grid_pts = tf.reshape(var_aa, [-1])
-#     corr_grid_pts = tf.reshape(corr_ab, [-1])
-
-#     return var_grid_pts, corr_grid_pts, qaa, qab
-

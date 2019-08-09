@@ -126,8 +126,6 @@ def load_cifar10(num_train=30000,
     x_test -= x_train_mean
     y_test -= y_train_mean
 
-  #y_train = np.reshape(y_train, (len(y_train), 1))[:num_train]
-  #y_test = np.reshape(y_test, (len(y_test), 1))[:num_test]
 
   return (x_train, y_train, x_test, y_test)
 
